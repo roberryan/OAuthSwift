@@ -48,9 +48,10 @@ public class OAuth2Swift: NSObject {
     
     public typealias TokenSuccessHandler = (credential: OAuthSwiftCredential, response: NSURLResponse?) -> Void
     public typealias FailureHandler = (error: NSError) -> Void
+    public typealias LoginHandler = (loginUrl: NSURL) -> Void
     
 
-    public func authorizeWithCallbackURL(callbackURL: NSURL, scope: String, state: String, params: Dictionary<String, String> = Dictionary<String, String>(), success: TokenSuccessHandler, failure: ((error: NSError) -> Void)) {
+    public func authorizeWithCallbackURL(callbackURL: NSURL, scope: String, state: String, params: Dictionary<String, String> = Dictionary<String, String>(), login: LoginHandler? = nil, success: TokenSuccessHandler, failure: ((error: NSError) -> Void)) {
         self.observer = NSNotificationCenter.defaultCenter().addObserverForName(CallbackNotification.notificationName, object: nil, queue: NSOperationQueue.mainQueue(), usingBlock:{
             notification in
             NSNotificationCenter.defaultCenter().removeObserver(self.observer!)
@@ -93,7 +94,11 @@ public class OAuth2Swift: NSObject {
         }
 
         let queryURL = NSURL(string: urlString)
-        if ( self.webViewController != nil ) {
+
+        if let _login = login {
+            _login(loginUrl: queryURL!)
+        }
+        else if ( self.webViewController != nil ) {
             if let webView = self.webViewController as? WebViewProtocol {
                 webView.setUrl(queryURL!)
                 UIApplication.sharedApplication().keyWindow?.rootViewController?.presentViewController(
